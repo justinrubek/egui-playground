@@ -1,5 +1,7 @@
 # egui-playground
 
+GitHub pages link: https://justinrubek.github.io/egui-playground/
+
 ## use
 
 Obtain a development shell: `nix develop`
