@@ -71,7 +71,12 @@
         buildInputs = with pkgs; [
           xorg.libxcb
         ];
-        buildPhase = "cargo build --release --lib --target wasm32-unknown-unknown";
+        buildPhase = ''
+          # required to enable web_sys clipboard API
+          export RUSTFLAGS=--cfg=web_sys_unstable_apis
+
+          cargo build --release --lib --target wasm32-unknown-unknown
+        '';
         installPhase = ''
           mkdir $out
           cp target/wasm32-unknown-unknown/release/egui_playground.wasm $out/egui_playground.wasm
@@ -90,6 +95,20 @@
           xorg.libXi
           xorg.libXrandr
         ];
+
+      # Used to build docs for hosting via github
+      build-docs = pkgs.writeShellScriptBin "build-docs" ''
+        # Build wasm manually to avoid incurring the cost upon dev shell startup
+        nix build .#wasm
+
+        PWD=${./.}
+
+        # Generate bindings
+        ${pkgs.wasm-bindgen-cli}/bin/wasm-bindgen ./result/egui_playground.wasm --out-dir docs --no-modules --no-typescript
+
+        # Optimize wasm
+        ${pkgs.binaryen}/bin/wasm-opt "docs/egui_playground_bg.wasm" -O2 --fast-math -o "docs/egui_playground_bg.wasm"
+      '';
     in rec {
       packages = {
         gui = rustPackage;
@@ -98,7 +117,7 @@
       };
       devShells = {
         default = pkgs.mkShell rec {
-          buildInputs = with pkgs; [rustWasm rustfmt wasm-bindgen-cli wasm-pack binaryen];
+          buildInputs = with pkgs; [rustWasm rustfmt wasm-bindgen-cli wasm-pack binaryen build-docs miniserve];
           inherit (pre-commit-check) shellHook;
           LD_LIBRARY_PATH = libPath;
         };
