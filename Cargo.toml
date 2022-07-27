@@ -1,5 +1,6 @@
 [package]
 name = "egui-playground"
+default-run = "egui-playground-bin"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,8 +9,8 @@ name = "egui-playground-bin"
 path = "src/main.rs"
 
 [lib]
-create-type = ["cdylib", "rlib"]
-path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
 
 [dependencies]
 eframe = { version = "0.18.0", features = ["persistence"] }

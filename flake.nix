@@ -41,6 +41,9 @@
       };
 
       rust = pkgs.rust-bin.stable.latest.default;
+      rustWasm = rust.override {
+        targets = ["wasm32-unknown-unknown"];
+      };
       rustPackage = pkgs.rustPlatform.buildRustPackage {
         pname = "egui-playground";
         version = "0.1.0";
@@ -52,10 +55,28 @@
         buildInputs = with pkgs; [
           xorg.libxcb
         ];
-        nativeBuildInputs = [pkgs.makeWrapper];
+        nativeBuildInputs = [rust pkgs.makeWrapper];
         postInstall = ''
           wrapProgram "$out/bin/egui-playground-bin" --prefix LD_LIBRARY_PATH : "${libPath}"
         '';
+      };
+      wasmPackage = pkgs.rustPlatform.buildRustPackage {
+        pname = "egui-playground";
+        version = "0.1.0";
+
+        src = gitignoreSource ./.;
+        cargoLock = {
+          lockFile = ./Cargo.lock;
+        };
+        buildInputs = with pkgs; [
+          xorg.libxcb
+        ];
+        buildPhase = "cargo build --release --lib --target wasm32-unknown-unknown";
+        installPhase = ''
+          mkdir $out
+          cp target/wasm32-unknown-unknown/release/egui_playground.wasm $out/egui_playground.wasm
+        '';
+        nativeBuildInputs = [rustWasm pkgs.binaryen pkgs.wasm-pack pkgs.wasm-bindgen-cli];
       };
 
       # Required by egui
@@ -72,11 +93,12 @@
     in rec {
       packages = {
         gui = rustPackage;
-        default = packages.gui;
+        wasm = wasmPackage;
+        default = packages.wasm;
       };
       devShells = {
         default = pkgs.mkShell rec {
-          buildInputs = with pkgs; [rust rustfmt];
+          buildInputs = with pkgs; [rustWasm rustfmt wasm-bindgen-cli wasm-pack binaryen];
           inherit (pre-commit-check) shellHook;
           LD_LIBRARY_PATH = libPath;
         };
