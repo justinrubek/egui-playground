@@ -59,16 +59,6 @@
       };
 
       # Required by egui
-      egui_inputs = with pkgs; [
-        fontconfig
-        xorg.libX11
-        xorg.libX11.dev
-        xorg.libxcb
-        speechd
-        libxkbcommon
-        openssl
-      ];
-
       libPath = with pkgs;
         lib.makeLibraryPath [
           libGL
@@ -86,7 +76,7 @@
       };
       devShells = {
         default = pkgs.mkShell rec {
-          buildInputs = with pkgs; [rust rustfmt] ++ egui_inputs;
+          buildInputs = with pkgs; [rust rustfmt];
           inherit (pre-commit-check) shellHook;
           LD_LIBRARY_PATH = libPath;
         };
