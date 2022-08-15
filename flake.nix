@@ -21,12 +21,8 @@
 
   outputs = {
     self,
-    nixpkgs,
     flake-utils,
     flake-parts,
-    gitignore,
-    rust-overlay,
-    pre-commit-hooks,
     ...
   }:
     flake-parts.lib.mkFlake {inherit self;} {
